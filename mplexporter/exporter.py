@@ -141,11 +141,16 @@ class Exporter(object):
                 self.draw_line(ax, line)
             for text in ax.texts:
                 self.draw_text(ax, text)
-            for (text, ttp) in zip([ax.xaxis.label, ax.yaxis.label, ax.title],
-                                   ["xlabel", "ylabel", "title"]):
-                if(hasattr(text, 'get_text') and text.get_text()):
+            for text_type, text in [
+                ("xlabel", ax.xaxis.label),
+                ("ylabel", ax.yaxis.label),
+                ("title", ax.title),
+                ("left_title", getattr(ax, "_left_title", None)),
+                ("right_title", getattr(ax, "_right_title", None)),
+            ]:
+                if hasattr(text, 'get_text') and text.get_text():
                     self.draw_text(ax, text, force_trans=ax.transAxes,
-                                   text_type=ttp)
+                                   text_type=text_type)
             for artist in ax.artists:
                 # TODO: process other artists
                 if isinstance(artist, matplotlib.text.Text):
