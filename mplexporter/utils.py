@@ -203,7 +203,8 @@ def get_text_style(text):
     style['color'] = export_color(text.get_color())
     style['halign'] = text.get_horizontalalignment()  # left, center, right
     style['valign'] = text.get_verticalalignment()  # baseline, center, top
-    style['malign'] = text._multialignment # text alignment when '\n' in text
+    style['malign'] = text._multialignment or style['halign']  # multiline align
+    style['linespacing'] = text._linespacing or 1.2  # linespacing in em units
     style['rotation'] = text.get_rotation()
     style['zorder'] = text.get_zorder()
     return style
