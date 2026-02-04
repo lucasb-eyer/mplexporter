@@ -207,7 +207,37 @@ def get_text_style(text):
     style['linespacing'] = text._linespacing or 1.2  # linespacing in em units
     style['rotation'] = text.get_rotation()
     style['zorder'] = text.get_zorder()
+    if (bbox := get_text_bbox(text)) is not None:
+        style['bbox'] = bbox
     return style
+
+
+def get_text_bbox(text):
+    """Return a text bbox style dict if a bbox patch is defined."""
+    if (bbox_patch := text.get_bbox_patch()) is None or not bbox_patch.get_visible():
+        return None
+
+    bbox = {}
+    bbox['alpha'] = bbox_patch.get_alpha()
+    if bbox['alpha'] is None:
+        bbox['alpha'] = 1
+    bbox['edgecolor'] = export_color(bbox_patch.get_edgecolor())
+    bbox['facecolor'] = export_color(bbox_patch.get_facecolor())
+    bbox['edgewidth'] = bbox_patch.get_linewidth()
+    bbox['dasharray'] = get_dasharray(bbox_patch)
+
+    boxstyle = bbox_patch.get_boxstyle()
+    bbox['boxstyle'] = boxstyle.__class__.__name__.lower()
+    bbox['pad'] = boxstyle.pad
+    if hasattr(boxstyle, "rounding_size"):
+        bbox['rounding_size'] = boxstyle.rounding_size
+
+    if (mutation_scale := bbox_patch.get_mutation_scale()) is not None:
+        bbox['mutation_scale'] = mutation_scale
+    if (mutation_aspect := bbox_patch.get_mutation_aspect()) is not None:
+        bbox['mutation_aspect'] = mutation_aspect
+
+    return bbox
 
 
 def is_py_only_formatter(formatter):
