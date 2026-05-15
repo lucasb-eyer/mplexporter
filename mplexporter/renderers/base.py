@@ -1,10 +1,8 @@
 import warnings
 import itertools
 from contextlib import contextmanager
-from packaging.version import Version
 
 import numpy as np
-import matplotlib as mpl
 from matplotlib import transforms
 
 from .. import utils
@@ -196,11 +194,10 @@ class Renderer(object):
         """Build an iterator over the elements of the path collection"""
         N = max(len(paths), len(offsets))
 
-        # Before mpl 1.4.0, path_transform can be a false-y value, not a valid
-        # transformation matrix.
-        if Version(mpl.__version__) < Version('1.4.0'):
-            if path_transforms is None:
-                path_transforms = [np.eye(3)]
+        # Some collections have no per-path transform. Treat that as identity
+        # so the draw_path fallback still emits the paths once.
+        if path_transforms is None or len(path_transforms) == 0:
+            path_transforms = [np.eye(3)]
 
         edgecolor = styles['edgecolor']
         if np.size(edgecolor) == 0:
@@ -241,17 +238,19 @@ class Renderer(object):
         path_coordinates: string
             the coordinates code for the paths, which should be either
             'data' for data coordinates, or 'figure' for figure (pixel)
-            coordinates.
+            coordinates, or 'points' for local point coordinates applied
+            before offsets.
         path_transforms: array_like
             an array of shape (*, 3, 3), giving a series of 2D Affine
             transforms for the paths. These encode translations, rotations,
             and scalings in the standard way.
         offsets: array_like
-            An array of offsets of shape (N, 2)
+            An array of offsets of shape (N, 2), or None if the collection
+            has no semantic offsets.
         offset_coordinates : string
             the coordinates code for the offsets, which should be either
-            'data' for data coordinates, or 'figure' for figure (pixel)
-            coordinates.
+            'data' for data coordinates, 'figure' for figure (pixel)
+            coordinates, or 'display' for absolute display pixels.
         offset_order : string
             either "before" or "after". This specifies whether the offset
             is applied before the path transform, or after.  The matplotlib
@@ -264,6 +263,9 @@ class Renderer(object):
         """
         if offset_order == "before":
             raise NotImplementedError("offset before transform")
+
+        if offsets is None:
+            offsets = [None]
 
         for tup in self._iter_path_collection(paths, path_transforms,
                                               offsets, styles):

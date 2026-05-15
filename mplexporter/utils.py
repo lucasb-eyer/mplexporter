@@ -207,9 +207,22 @@ def get_text_style(text):
     style['linespacing'] = text._linespacing or 1.2  # linespacing in em units
     style['rotation'] = text.get_rotation()
     style['zorder'] = text.get_zorder()
+    if _is_axes_clip(text):
+        style['clip_on'] = True
     if (bbox := get_text_bbox(text)) is not None:
         style['bbox'] = bbox
     return style
+
+
+def _is_axes_clip(text):
+    """Return whether text is clipped to its parent axes bbox."""
+    axes = getattr(text, 'axes', None)
+    clip_box = text.get_clip_box()
+    if not text.get_clip_on() or axes is None or clip_box is None:
+        return False
+    if text.get_clip_path() is not None:
+        return False
+    return np.allclose(clip_box.bounds, axes.bbox.bounds)
 
 
 def get_text_bbox(text):

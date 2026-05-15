@@ -68,5 +68,6 @@ class FullFakeRenderer(FakeRenderer):
     def draw_path_collection(self, paths, path_coordinates, path_transforms,
                              offsets, offset_coordinates, offset_order,
                              styles, mplobj=None):
+        offset_count = 0 if offsets is None else offsets.shape[0]
         self.output += ("    draw path collection "
-                        "with {0} offsets\n".format(offsets.shape[0]))
+                        "with {0} offsets\n".format(offset_count))

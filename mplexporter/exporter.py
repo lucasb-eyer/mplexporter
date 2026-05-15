@@ -277,13 +277,17 @@ class Exporter(object):
 
         offset_coords, offsets = self.process_transform(
             transOffset, ax=ax, data=offsets, force_trans=force_offsettrans)
-        path_coords = self.process_transform(
-            transform, ax=ax, force_trans=force_pathtrans)
+        path_coords, path_transform = self.process_transform(
+            transform, ax=ax, return_trans=True,
+            force_trans=force_pathtrans)
+        has_offsets = _has_collection_offsets(offsets, transOffset)
+        if path_coords == "display" and has_offsets:
+            path_coords = "points"
+        if not has_offsets:
+            offsets = None
 
         processed_paths = [utils.SVG_path(path) for path in paths]
-        processed_paths = [(self.process_transform(
-            transform, ax=ax, data=path[0],
-            force_trans=force_pathtrans)[1], path[1])
+        processed_paths = [(path_transform.transform(path[0]), path[1])
                            for path in processed_paths]
 
         path_transforms = collection.get_transforms()
@@ -368,3 +372,13 @@ def _collections_prepare_points(self, ax):
         # is probably most efficient at this point.
 
     return transform, transOffset, offsets, paths
+
+
+def _has_collection_offsets(offsets, transOffset):
+    if offsets is None or not np.size(offsets):
+        return False
+
+    offsets = np.asarray(offsets)
+    return not (offsets.shape == (1, 2)
+                and np.all(offsets == 0)
+                and isinstance(transOffset, transforms.IdentityTransform))

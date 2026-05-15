@@ -1,6 +1,7 @@
 import matplotlib
 import numpy as np
 from packaging.version import Version
+from matplotlib.collections import LineCollection
 from unittest import SkipTest
 from numpy.testing import assert_warns
 
@@ -91,6 +92,43 @@ def test_path_collection():
                          closing axes
                          closing figure
                          """)
+
+
+def test_collection_without_offsets():
+    def make_fig():
+        fig, ax = plt.subplots()
+        ax.add_collection(LineCollection([[(0, 0), (1, 1)]]))
+        return fig
+
+    _assert_output_equal(fake_renderer_output(make_fig(), FakeRenderer),
+                         """
+                         opening figure
+                         opening axes
+                         draw path with 2 vertices
+                         closing axes
+                         closing figure
+                         """)
+
+    class CollectionCaptureRenderer(FullFakeRenderer):
+        def __init__(self):
+            super(CollectionCaptureRenderer, self).__init__()
+            self.collections = []
+
+        def draw_path_collection(self, paths, path_coordinates,
+                                 path_transforms, offsets,
+                                 offset_coordinates, offset_order,
+                                 styles, mplobj=None):
+            self.collections.append({
+                "path_coordinates": path_coordinates,
+                "offsets": offsets,
+            })
+
+    renderer = CollectionCaptureRenderer()
+    Exporter(renderer).run(make_fig())
+
+    assert len(renderer.collections) == 1
+    assert renderer.collections[0]["path_coordinates"] == "data"
+    assert renderer.collections[0]["offsets"] is None
 
 
 def test_text():
